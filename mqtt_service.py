@@ -1,9 +1,10 @@
+from sqlmodel import SQLModel, create_engine, Session, select
+from dotenv import load_dotenv
+from db import engine
+from .model.UserTic import Alumno, Persona, PersonalServicio, Profesor
+from .model.clase import Clase, Fecha, Asignatura, DarAsignatura
 import paho.mqtt.client as mqtt
 import os
-from dotenv import load_dotenv
-from fastapi import FastAPI, Depends
-from sqlmodel import SQLModel, create_engine, Session, select
-from .model.UserTic import AlumneTic, ClasseTic
 
 load_dotenv()
 
@@ -28,17 +29,28 @@ def on_connect(client, userdata, flags, rc):
     print("Connected to HiveMQ broker with code:", rc)
     client.subscribe(MQTT_TOPIC)
 
-def on_message(client, userdata, msg,assistencia_confirmada: ClasseTic, find_user: AlumneTic, db: Session = Depends(get_db)):
+def on_message(client, userdata, msg):
     print(f"Message received in {msg.topic}: {msg.payload.decode()}")
     # save the data in the database
     user_id = int(msg.payload.decode())
-    query = select(find_user).where(find_user.id == user_id)
-    ddbb_user = db.exec(query).first()
-    assistencia_confirmada.id_alumne = ddbb_user.id
-    assistencia_confirmada.alumne_name = ddbb_user.name
-    assistencia_confirmada.assistencia = True
-    db.add(assistencia_confirmada)
-    db.commit()
+    with Session(engine) as db:
+        query = select(Alumno).where(Alumno.id_alumno == user_id)
+        ddbb_alumno = db.exec(query).first()
+
+        if not ddbb_alumno:
+            query = select(Persona).where(Persona.id == user_id)
+            ddbb_personal = db.exec(query).first
+
+            registro = Fecha() # Pending
+
+        registro_alumno = Clase() # Pending
+
+
+        assistencia_confirmada.id_alumne = ddbb_alumno.id
+        assistencia_confirmada.alumne_name = ddbb_alumno.name
+        assistencia_confirmada.assistencia = True
+        db.add(assistencia_confirmada)
+        db.commit()
 def start_mqtt():
     client = mqtt.Client(client_id=MQTT_CLIENT_ID)
     client.on_connect = on_connect
