@@ -1,8 +1,19 @@
 from sqlmodel import SQLModel, Field
 
-class UserTic(SQLModel, table = True):
+class Alumno(SQLModel, table=True):
+    id_alumno: int = Field(default=None, primary_key=True)
+    nombre: str = Field(max_length=100)
+    apellidos: str = Field(max_length=100)
+    correoelectronico: str = Field(max_length=100, unique=True)
+
+class Persona(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
-    level: int
-    name: str
-    last_name: str
-    rol: str
+    nombre: str = Field(max_length=100)
+    apellidos: str = Field(max_length=100)
+    correoelectronico: str = Field(max_length=100, unique=True)
+
+class PersonalServicio(SQLModel, table=True):
+    id_personal: int = Field(foreign_key="persona.id", primary_key=True)
+
+class Profesor(SQLModel, table=True):
+    id_profesor: int = Field(foreign_key="persona.id", primary_key=True)
