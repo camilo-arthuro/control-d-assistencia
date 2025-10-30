@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, create_engine, Session, select
 from dotenv import load_dotenv
-from db import engine
+from datetime import datetime
 from .model.UserTic import Alumno, Persona, PersonalServicio, Profesor
-from .model.clase import Clase, Fecha, Asignatura, DarAsignatura
+from .model.clase import Clase, Fecha, Asignatura, DarAsignatura, Trabaja
 import paho.mqtt.client as mqtt
 import os
 
@@ -26,31 +26,61 @@ def get_db():
         db.close()
 
 def on_connect(client, userdata, flags, rc):
-    print("Connected to HiveMQ broker with code:", rc)
+    print("Conectado a HiveMQ broker con codigo:", rc)
     client.subscribe(MQTT_TOPIC)
 
 def on_message(client, userdata, msg):
-    print(f"Message received in {msg.topic}: {msg.payload.decode()}")
-    # save the data in the database
-    user_id = int(msg.payload.decode())
+    print(f"Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
+
+    id_usuario = int(msg.payload.decode())
+    info_fecha = datetime.now()
+    hh = info_fecha.hour
+    dd = info_fecha.day
+    mm = info_fecha.month
+    aa = info_fecha.year
+    jornada = "mañana" if hh < 14 else "tarde"
+
     with Session(engine) as db:
-        query = select(Alumno).where(Alumno.id_alumno == user_id)
+        query = select(Alumno).where(Alumno.id_alumno == id_usuario)
         ddbb_alumno = db.exec(query).first()
 
-        if not ddbb_alumno:
-            query = select(Persona).where(Persona.id == user_id)
-            ddbb_personal = db.exec(query).first
+        if ddbb_alumno:
+            query_asignatura = select(Asignatura).where(Asignatura.descripcion == jornada)
+            ddbb_asignatura = db.exec(query_asignatura).first()
+            if not ddbb_asignatura:
+                print(f"No se encontró asignatura para jornada {jornada}")
+                return
+            registro_alumno = Clase(
+                id_alumno=ddbb_alumno.id_alumno,
+                id_asignatura=ddbb_asignatura.id_asignatura,
+                hora=hh,
+                dia=dd,
+                mes=mm,
+                anyo=aa,
+                asistio=True
+            )
+            db.add(registro_alumno)
+            db.commit()
+            print(f"Asistencia registrada")
+        else:
+            query = select(Persona).where(Persona.id == id_usuario)
+            ddbb_personal = db.exec(query).first()
 
-            registro = Fecha() # Pending
+            if not ddbb_personal:
+                print(f"Tarjeta sin asignar {id_usuario}")
+                return
+            registro_personal = Trabaja(
+                id_persona = ddbb_personal.id_persona,
+                hora = hh,
+                dia = dd,
+                mes = mm,
+                anyo = aa,
+                asistio= True
+            )
+            db.add(registro_personal)
+            db.commit()
+            print(f"Asistencia registrada")
 
-        registro_alumno = Clase() # Pending
-
-
-        assistencia_confirmada.id_alumne = ddbb_alumno.id
-        assistencia_confirmada.alumne_name = ddbb_alumno.name
-        assistencia_confirmada.assistencia = True
-        db.add(assistencia_confirmada)
-        db.commit()
 def start_mqtt():
     client = mqtt.Client(client_id=MQTT_CLIENT_ID)
     client.on_connect = on_connect
