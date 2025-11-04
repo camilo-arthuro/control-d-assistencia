@@ -13,7 +13,7 @@ services:
      #- local_pgdata:/var/lib/postgresql/data
  pgadmin:
    image: dpage/pgadmin4
-   container_name: pg_fastapi
+   container_name: pg_assistencia
    ports:
      - "80:80"
    environment:
