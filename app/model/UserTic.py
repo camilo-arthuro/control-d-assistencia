@@ -12,6 +12,7 @@ class Persona(SQLModel, table=True):
     nombre: str = Field(max_length=100)
     apellidos: str = Field(max_length=100)
     correoelectronico: str = Field(max_length=100, unique=True)
+    contrasenya_correo: str = Field(max_length=100)
     rol: RolEnum
 
 class Alumno(SQLModel, table=True):
