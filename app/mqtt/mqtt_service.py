@@ -2,7 +2,7 @@ from sqlmodel import SQLModel, create_engine, Session, select
 from dotenv import load_dotenv
 from datetime import datetime, date, time
 from app.model.UserTic import Alumno, Persona
-from app.model.clase import AsistenciaAlumno, Asignatura, Trabaja, Clase, AsistenciaClases
+from app.model.clase import Asignatura, Trabaja, Asiste
 import paho.mqtt.client as mqtt
 import os
 
@@ -38,52 +38,33 @@ def on_message(client, userdata, msg):
     hh = info_fecha.hour
     mm = info_fecha.minute
     hora_actual=time(hh,mm)
-    jornada = "mañana" if hh < 14 else "tarde"
 
     with (Session(engine) as db):
-        query = select(Alumno).where(Alumno.id_alumno == id_usuario)
-        ddbb_alumno = db.exec(query).first()
-
-        if ddbb_alumno:
-            query_asignatura = select(Asignatura).where(Asignatura.descripcion == jornada)
-            ddbb_asignatura = db.exec(query_asignatura).first()
-            if not ddbb_asignatura:
-                return print(f"No se encontró asignatura para jornada {jornada}")
-            else:
-                existe_registro = select(AsistenciaAlumno).where(
-                    AsistenciaAlumno.id_alumno == id_usuario
-                ).where(AsistenciaAlumno.id_clase == ddbb_asignatura.id_asignatura)
-                ddbb_registro= db.exec(existe_registro).first()
-                num_asistencia = ddbb_registro.asistio
-                num_falta = ddbb_registro.falto
-                num_justificantes = ddbb_registro.justificante
-                existe_en_clase = select(Clase).where(Clase.nombre == ddbb_alumno.clase)
-                ddbb_clase = db.exec(existe_en_clase).first()
-                
-                registro_alumno = asistencia_alumno(
-                    ddbb_alumno.id_alumno,ddbb_clase.id_clase,ddbb_asignatura.id_asignatura,num_asistencia,
-                    num_falta,num_justificantes
-                )
-                ddbb_registro.sqlmodel_update(registro_alumno)
-                db.add(registro_alumno)
-                db.commit()
-                registro_clase= asistencia_clase(
-                    ddbb_alumno.id_alumno, ddbb_clase.id_clase, ddbb_asignatura.id_asignatura,
-                    fecha_actual,hora_actual
-                )
-                db.add(registro_clase)
-                db.commit()
-                return print(f"Asistencia registrada")
+        query = select(Persona).where(Persona.id_persona == id_usuario)
+        ddbb_persona = db.exec(query).first()
+        rol = ddbb_persona.rol
+        if not ddbb_persona:
+            return print(f"Tarjeta sin asignar: {id_usuario}")
+        elif rol == "alumno":
+            registro_alumno=Asiste(
+                id_alumno = id_usuario,
+                id_asignatura= 1,
+                fecha= fecha_actual,
+                hora= hora_actual,
+                asistio= True
+            )
+            db.add(registro_alumno)
+            db.commit()
+            return print(f"Asistencia registrada {id_usuario}")
         else:
-            query = select(Persona).where(Persona.id == id_usuario)
-            ddbb_personal = db.exec(query).first()
-            if not ddbb_personal:
-                return print(f"Tarjeta sin asignar {id_usuario}")
-            else:
-                registro_personal =asistencia_trabaja(ddbb_personal.id_persona,fecha_actual,hora_actual)
-                db.add(registro_personal)
-                db.commit()
-                return print(f"Asistencia registrada")
+            registro_personal=Trabaja(
+                id_personal=id_usuario,
+                fecha=fecha_actual,
+                hora=hora_actual
+            )
+            db.add(registro_personal)
+            db.commit()
+            return print(f"Asistencia registrada {id_usuario}")
 
 def start_mqtt():
     client = mqtt.Client(client_id=MQTT_CLIENT_ID)
@@ -92,30 +73,7 @@ def start_mqtt():
     client.connect(MQTT_HOST, MQTT_PORT)
     client.loop_forever()
 
-def asistencia_alumno(id_alumno, id_clase, id_asignatura, total_asistencia, total_faltas, total_justificadas):
-    registro = AsistenciaAlumno(
-        id_alumno=id_alumno,
-        id_clase= id_clase,
-        id_asignatura=id_asignatura,
-        asistio=total_asistencia + 1,
-        falto=total_faltas,
-        justificante=total_justificadas,
-        porcentaje_fallas=(total_faltas * 100) / (total_asistencia + 1 + total_faltas)
-    )
-    return registro
-
-def asistencia_clase(id_alumno, id_clase, id_asignatura, fecha, hora):
-    registro=AsistenciaClases(
-        id_alumno=id_alumno,
-        id_clase=id_clase,
-        id_asignatura=id_asignatura,
-        fecha=fecha,
-        hora=hora,
-        asistio= True
-    )
-    return registro
-
-def asistencia_trabaja(id_persona, fecha, hora):
+def asistencia_trabaja(id_persona, fecha, hora): #PENDING!!!!!!!!!!!
     registro=Trabaja(
         id_persona=id_persona,
         fecha=fecha,

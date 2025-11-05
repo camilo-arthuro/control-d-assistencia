@@ -1,7 +1,5 @@
 from sqlmodel import SQLModel, Field
-from typing import Optional
 from datetime import date, time
-from enum import Enum
 
 class Asiste(SQLModel, table=True):
     id_alumno: int = Field(foreign_key="alumno.id_alumno", primary_key=True)

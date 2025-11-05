@@ -1,6 +1,5 @@
 from sqlmodel import SQLModel, Field
 from enum import Enum
-from .clase import ClaseEnum
 
 class RolEnum(str, Enum):
     alumno = "alumno"
