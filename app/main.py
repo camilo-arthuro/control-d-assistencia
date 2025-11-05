@@ -103,3 +103,14 @@ async def get_all_personal(db: Session = Depends(get_db)):
     personal=db.exec(query).all()
     return [Persona.model_validate(persona) for persona in personal]
 
+@app.get("/api/asistencia/asignaturas", response_model=list[Asignatura], tags=["READ All Asignaturas"])
+async def get_all_asignaturas(db: Session = Depends(get_db)):
+    query=select(Asignatura)
+    asignaturas=db.exec(query).all()
+    return [Asignatura.model_validate(asignatura) for asignatura in asignaturas]
+
+@app.get("/api/asistencia/clases", response_model=list[Clase], tags=["READ ALL Clases"])
+async def get_all_clases(db: Session=Depends(get_db)):
+    query=select(Clase)
+    clases=db.exec(query).all()
+    return [Clase.model_validate(clase) for clase in clases]
