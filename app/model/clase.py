@@ -26,4 +26,4 @@ class Horario(SQLModel, table = True):
     id_asignatura: int = Field(foreign_key="asignatura.id_asignatura", primary_key=True)
     fecha: date = Field(primary_key=True)
     hora: time = Field(primary_key=True)
-    aula: str = Field(max_lenght=20)
+    aula: str = Field(max_length=20)

@@ -10,6 +10,11 @@ client = mqtt.Client()
 
 client.connect(MQTT_HOST, MQTT_PORT)
 
+payload = "1"
+client.publish(MQTT_TOPIC, payload)
+print(f"Mensaje enviado: {payload}")
+
+'''
 for i in range(5):
     payload = {
         "id_usuario": f"user_{i}",
@@ -19,5 +24,5 @@ for i in range(5):
     client.publish(MQTT_TOPIC, json.dumps(payload))
     print(f"Mensaje enviado: {payload}")
     time.sleep(2)  # Espera entre mensajes
-
+'''
 client.disconnect()

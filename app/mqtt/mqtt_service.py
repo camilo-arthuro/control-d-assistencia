@@ -72,13 +72,3 @@ def start_mqtt():
     client.on_message = on_message
     client.connect(MQTT_HOST, MQTT_PORT)
     client.loop_forever()
-
-def asistencia_trabaja(id_persona, fecha, hora): #PENDING!!!!!!!!!!!
-    registro=Trabaja(
-        id_persona=id_persona,
-        fecha=fecha,
-        hora=hora,
-        zona="itic bcn",
-        asistio=True
-    )
-    return registro
