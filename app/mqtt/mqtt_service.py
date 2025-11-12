@@ -8,10 +8,21 @@ import os
 
 load_dotenv()
 
+'''
 MQTT_HOST = os.getenv("MQTT_HOST")
 MQTT_PORT = int(os.getenv("MQTT_PORT"))
 MQTT_TOPIC = os.getenv("MQTT_TOPIC")
 MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID")
+'''
+
+# AWS IoT MQTT
+AWS_IOT_ENDPOINT = os.getenv("AWS_IOT_ENDPOINT")
+AWS_IOT_PORT = int(os.getenv("AWS_IOT_PORT", 8883))
+AWS_IOT_TOPIC = os.getenv("AWS_IOT_TOPIC")
+AWS_IOT_CLIENT_ID = os.getenv("AWS_IOT_CLIENT_ID")
+AWS_IOT_CERT = os.getenv("AWS_IOT_CERT")
+AWS_IOT_KEY = os.getenv("AWS_IOT_KEY")
+AWS_IOT_ROOT_CA = os.getenv("AWS_IOT_ROOT_CA")
 
 #DDBB
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -27,7 +38,7 @@ def get_db():
 
 def on_connect(client, userdata, flags, rc):
     print("Conectado a HiveMQ broker con codigo:", rc)
-    client.subscribe(MQTT_TOPIC)
+    client.subscribe(AWS_IOT_TOPIC)
 
 def on_message(client, userdata, msg):
     print(f"Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
@@ -67,8 +78,11 @@ def on_message(client, userdata, msg):
             return print(f"Asistencia registrada {id_usuario}")
 
 def start_mqtt():
-    client = mqtt.Client(client_id=MQTT_CLIENT_ID)
+    client = mqtt.Client(client_id=AWS_IOT_CLIENT_ID)
+    client.tls_set(ca_certs=AWS_IOT_ROOT_CA,
+                   certfile=AWS_IOT_CERT,
+                   keyfile=AWS_IOT_KEY)
     client.on_connect = on_connect
     client.on_message = on_message
-    client.connect(MQTT_HOST, MQTT_PORT)
+    client.connect(AWS_IOT_ENDPOINT, AWS_IOT_PORT, keepalive=60)
     client.loop_forever()
