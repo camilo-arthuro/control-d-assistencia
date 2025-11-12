@@ -43,7 +43,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     print(f"Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
 
-    id_usuario = int(msg.payload.decode())
+    id_usuario = str(msg.payload.decode())
     info_fecha = datetime.now()
     fecha_actual = info_fecha.date()
     hh = info_fecha.hour
@@ -53,10 +53,11 @@ def on_message(client, userdata, msg):
     with (Session(engine) as db):
         query = select(Persona).where(Persona.id_persona == id_usuario)
         ddbb_persona = db.exec(query).first()
-        rol = ddbb_persona.rol
         if not ddbb_persona:
             return print(f"Tarjeta sin asignar: {id_usuario}")
-        elif rol == "alumno":
+        else:
+            rol = ddbb_persona.rol
+        if rol == "alumno":
             registro_alumno=Asiste(
                 id_alumno = id_usuario,
                 id_asignatura= 1,
