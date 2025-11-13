@@ -2,8 +2,8 @@ from fastapi import FastAPI, Depends
 from sqlmodel import SQLModel, create_engine, Session, select
 from .mqtt.mqtt_service import start_mqtt
 from dotenv import load_dotenv
-from .model.UserTic import Alumno, Persona
-from .model.clase import Asignatura, DarAsignatura, Clase, AsistenciaAlumno, PrimeraAsistencia
+from .model.UserTic import Persona, Alumno, Profesor, PersonalServicio
+from .model.clase import Asignatura
 import threading
 import os
 
@@ -27,90 +27,60 @@ def startup_event():
     thread.daemon = True
     thread.start()
 
-@app.post("/api/asistencia/alumno", response_model=dict, tags=["CREAR ALUMNO"])
-async def crear_alumno(alumno_nuevo: Alumno, db: Session = Depends(get_db)):
-    datos_alumno = Alumno.model_validate(alumno_nuevo)
-    db.add(datos_alumno)
+@app.post("/api/asistencia/persona", response_model=dict, tags=["CREAR USUARIO"])
+async def crear_usuario(usuario_nuevo: Persona, db: Session = Depends(get_db)):
+    datos_usuario = Persona.model_validate(usuario_nuevo)
+    db.add(datos_usuario)
     db.commit()
-    return {"msg":"Alumno/a añadido/a a la DDBB"}
-
-@app.post("/api/asistencia/primer-registro", response_model=dict, tags=["PREIMER REGISTRO"])
-async def primer_registro(datos_registro: PrimeraAsistencia, db: Session=Depends(get_db)):
-    id_asignatura=datos_registro.id_asignatura
-    msg= f"Alumno/a añadido/a a la asignatura {id_asignatura}"
-    registro=AsistenciaAlumno(
-        id_alumno=datos_registro.id_alumno,
-        id_clase=datos_registro.id_clase,
-        id_asignatura=id_asignatura,
-        total_asistencia=0,
-        total_faltas=0,
-        total_justificadas=0,
-        porcentaje_fallas=0
-    )
-    db.add(registro)
+    if datos_usuario.rol == "alumno":
+        nuevo_alumno=Alumno.model_validate({"id_alumno" : datos_usuario.id_persona})
+        db.add(nuevo_alumno)
+    elif datos_usuario.rol == "profesor":
+        nuevo_profesor=Profesor.model_validate({"id_profesor" : datos_usuario.id_persona})
+        db.add(nuevo_profesor)
+    elif datos_usuario.rol == "personal_servicio":
+        nuevo_personal=PersonalServicio.model_validate({"id_personal" : datos_usuario.id_persona})
+        db.add(nuevo_personal)
     db.commit()
-    return {"msg":msg}
-
-@app.post("/api/asistencia/personal", response_model=dict, tags=["CREAR PERSONAL"])
-async def crear_personal(personal_nuevo: Persona, db: Session = Depends(get_db)):
-    datos_personal = Persona.model_validate(personal_nuevo)
-    db.add(datos_personal)
-    db.commit()
-    return {"msg":"Personal añadido a la DDBB"}
+    return {"msg":"Usuario creado y añadido a la DDBB"}
 
 @app.post("/api/asistencia/asignatura", response_model=dict, tags=["CREAR ASIGNATURA"])
 async def crear_asignatura(asignatura_nueva: Asignatura, db: Session = Depends(get_db)):
     datos_asignatura = Asignatura.model_validate(asignatura_nueva)
     db.add(datos_asignatura)
     db.commit()
-    return {"msg":"Asignatura añadida a la DDBB"}
+    return {"msg":"Asignatura creada y añadida a la DDBB"}
 
-@app.post("/api/asistencia/clase", response_model=dict, tags=["CREAR CLASE"])
-async def crear_asignatura(clase_nueva: Clase, db: Session = Depends(get_db)):
-    datos_clase = Clase.model_validate(clase_nueva)
-    db.add(datos_clase)
-    db.commit()
-    return {"msg":"Clase añadida a la DDBB"}
+@app.get("/api/asistencia/personas", response_model=list[Persona], tags=["VER USUARIOS"])
+async def ver_personas(db: Session = Depends(get_db)):
+    query = select(Persona)
+    datos_personas = db.exec(query).all()
+    return [Persona.model_validate(persona) for persona in datos_personas]
 
-@app.post("/api/asistencia/dar-asignatura", response_model=dict, tags=["ASIGNAR PROFESOR"])
-async def crear_asignatura(profesor_asignado: DarAsignatura, db: Session = Depends(get_db)):
-    datos_profesor_asignatura = DarAsignatura.model_validate(profesor_asignado)
-    db.add(datos_profesor_asignatura)
-    db.commit()
-    return {"msg":"Profesor/a asignado/a y añadido/a a la DDBB"}
-
-@app.get("/api/asistencia/alumno/{id}", response_model=Alumno, tags=["READ Alumno by ID"])
-async def get_alumno_by_id(id: int, db: Session = Depends(get_db)):
-    query=select(Alumno).where(Alumno.id_alumno == id)
-    alumno_by_id=db.exec(query).first()
-    return Alumno.model_validate(alumno_by_id)
-
-@app.get("/api/asistencia/alumnos", response_model=list[Alumno], tags=["READ All Alumnos"])
-async def get_all_alumnos(db: Session = Depends(get_db)):
-    query=select(Alumno)
-    alumnos=db.exec(query).all()
-    return [Alumno.model_validate(alumno) for alumno in alumnos]
-
-@app.get("/api/asistencia/persona/{id}", response_model=Persona, tags=["READ Personal by ID"])
-async def get_persona_by_id(id: int, db: Session = Depends(get_db)):
-    query=select(Persona).where(Persona.id_persona == id)
-    persona_by_id=db.exec(query).first()
-    return Persona.model_validate(persona_by_id)
-
-@app.get("/api/asistencia/personal", response_model=list[Persona], tags=["READ All Personal"])
-async def get_all_personal(db: Session = Depends(get_db)):
-    query=select(Persona)
-    personal=db.exec(query).all()
-    return [Persona.model_validate(persona) for persona in personal]
-
-@app.get("/api/asistencia/asignaturas", response_model=list[Asignatura], tags=["READ All Asignaturas"])
-async def get_all_asignaturas(db: Session = Depends(get_db)):
+@app.get("/api/asistencia/asignaturas", response_model=list[Asignatura], tags=["VER ASIGNATURAS"])
+async def ver_asignaturas(db: Session = Depends(get_db)):
     query=select(Asignatura)
-    asignaturas=db.exec(query).all()
-    return [Asignatura.model_validate(asignatura) for asignatura in asignaturas]
+    datos_asignaturas=db.exec(query).all()
+    return [Asignatura.model_validate(asignatura) for asignatura in datos_asignaturas]
 
-@app.get("/api/asistencia/clases", response_model=list[Clase], tags=["READ ALL Clases"])
-async def get_all_clases(db: Session=Depends(get_db)):
-    query=select(Clase)
-    clases=db.exec(query).all()
-    return [Clase.model_validate(clase) for clase in clases]
+@app.delete("/api/asistencia/persona", response_model=dict, tags=["ELIMINAR USUARIO"])
+async def eliminar_usuario(id: int, db: Session = Depends(get_db)):
+    query=select(Persona).where(Persona.id_persona == id)
+    eliminar_usuario= db.exec(query).first()
+    if eliminar_usuario:
+        if eliminar_usuario.rol == "alumno":
+            query_alumno=select(Alumno).where(Alumno.id_alumno == id)
+            eliminar_alumno=db.exec(query_alumno).first()
+            db.delete(eliminar_alumno)
+        elif eliminar_usuario.rol == "profesor":
+            query_profesor=select(Profesor).where(Profesor.id_profesor == id)
+            eliminar_profesor=db.exec(query_profesor).first()
+            db.delete(eliminar_profesor)
+        elif eliminar_usuario.rol == "personal_servicio":
+            query_personal=select(PersonalServicio).where(PersonalServicio.id_personal == id)
+            eliminar_personal=db.exec(query_personal).first()
+            db.delete(eliminar_personal)
+        db.commit()
+    db.delete(eliminar_usuario)
+    db.commit()
+    return {"msg":"Usuario eliminado"}
