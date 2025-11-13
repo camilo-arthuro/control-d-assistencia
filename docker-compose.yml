@@ -5,7 +5,7 @@ services:
    container_name: db_assistencia
    environment:
      - POSTGRES_DB=assistencia_db
-     - POSTGRES_PASSWORD=tricornio
+     - POSTGRES_PASSWORD=ardhon
      - POSTGRES_USER=user
    ports:
      - "5432:5432"
@@ -17,8 +17,8 @@ services:
    ports:
      - "80:80"
    environment:
-     PGADMIN_DEFAULT_EMAIL: tricornio@tricornio.com
-     PGADMIN_DEFAULT_PASSWORD: tricornio
+     PGADMIN_DEFAULT_EMAIL: ardhon@ardhon.com
+     PGADMIN_DEFAULT_PASSWORD: ardhon
    #volumes:
      #- pgadmin-data:/var/lib/pgadmin
 #volumes:

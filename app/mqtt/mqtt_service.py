@@ -37,13 +37,19 @@ def get_db():
         db.close()
 
 def on_connect(client, userdata, flags, rc):
-    print("Conectado a HiveMQ broker con codigo:", rc)
+    print("Conectado a AWS IoT con codigo:", rc)
     client.subscribe(AWS_IOT_TOPIC)
 
 def on_message(client, userdata, msg):
-    print(f"Mensaje recibido en {msg.topic}: {msg.payload.decode()}")
+    print(f"Mensaje recibido en {msg.topic}: {msg.payload}")
 
-    id_usuario = str(msg.payload.decode())
+    try:
+        payload = msg.payload.decode()
+        print("Payload decodificado: ", payload)
+    except Exception as e:
+        print("Formato inesperado, no se pudo convertir: ", e)
+        payload = "Formato inesperado"
+    id_usuario = str(payload)
     info_fecha = datetime.now()
     fecha_actual = info_fecha.date()
     hh = info_fecha.hour
