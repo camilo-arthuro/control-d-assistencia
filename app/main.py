@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from sqlmodel import SQLModel, create_engine, Session, select
 from .mqtt.mqtt_service import start_mqtt
 from dotenv import load_dotenv
-from .model.UserTic import Persona, Alumno, Profesor, PersonalServicio
+from .model.UserTic import Trabajador, Alumno, Profesor, PersonalServicio
 from .model.clase import Asignatura
 import threading
 import os
@@ -27,22 +27,27 @@ def startup_event():
     thread.daemon = True
     thread.start()
 
-@app.post("/api/asistencia/persona", response_model=dict, tags=["CREAR USUARIO"])
-async def crear_usuario(usuario_nuevo: Persona, db: Session = Depends(get_db)):
-    datos_usuario = Persona.model_validate(usuario_nuevo)
-    db.add(datos_usuario)
+# CREATE
+@app.post("/api/asistencia/trabajador", response_model=dict, tags=["CREAR TRABAJADOR"])
+async def crear_trabajador(trabajador_nuevo: Trabajador, db: Session = Depends(get_db)):
+    datos_trabajador = Trabajador.model_validate(trabajador_nuevo)
+    db.add(datos_trabajador)
     db.commit()
-    if datos_usuario.rol == "alumno":
-        nuevo_alumno=Alumno.model_validate({"id_alumno" : datos_usuario.id_persona})
-        db.add(nuevo_alumno)
-    elif datos_usuario.rol == "profesor":
-        nuevo_profesor=Profesor.model_validate({"id_profesor" : datos_usuario.id_persona})
+    if datos_trabajador.rol == "profesor":
+        nuevo_profesor=Profesor.model_validate({"id_profesor" : datos_trabajador.id_persona})
         db.add(nuevo_profesor)
-    elif datos_usuario.rol == "personal_servicio":
-        nuevo_personal=PersonalServicio.model_validate({"id_personal" : datos_usuario.id_persona})
+    elif datos_trabajador.rol == "personal_servicio":
+        nuevo_personal=PersonalServicio.model_validate({"id_personal" : datos_trabajador.id_persona})
         db.add(nuevo_personal)
     db.commit()
-    return {"msg":"Usuario creado y añadido a la DDBB"}
+    return {"msg":"Trabajdor creado y añadido a la DDBB"}
+
+@app.post("/api/asistencia/alumno", response_model=dict, tags=["CREAR ALUMNO"])
+async def crear_alumno(alumno_nuevo: Alumno, db:Session = Depends(get_db)):
+    datos_alumno = Alumno.model_validate(alumno_nuevo)
+    db.add(datos_alumno)
+    db.commit()
+    return {"msg":"Alumno creado y añadido a la DDBB"}
 
 @app.post("/api/asistencia/asignatura", response_model=dict, tags=["CREAR ASIGNATURA"])
 async def crear_asignatura(asignatura_nueva: Asignatura, db: Session = Depends(get_db)):
@@ -51,11 +56,18 @@ async def crear_asignatura(asignatura_nueva: Asignatura, db: Session = Depends(g
     db.commit()
     return {"msg":"Asignatura creada y añadida a la DDBB"}
 
-@app.get("/api/asistencia/personas", response_model=list[Persona], tags=["VER USUARIOS"])
+# READ
+@app.get("/api/asistencia/trabajadores", response_model=list[Trabajador], tags=["VER TRABAJADORES"])
 async def ver_personas(db: Session = Depends(get_db)):
-    query = select(Persona)
+    query = select(Trabajador)
     datos_personas = db.exec(query).all()
-    return [Persona.model_validate(persona) for persona in datos_personas]
+    return [Trabajador.model_validate(persona) for persona in datos_personas]
+
+@app.get("/api/asistencia/alumnos", response_model=list[Alumno], tags=["VER ALUMNOS"])
+async def ver_personas(db: Session = Depends(get_db)):
+    query = select(Alumno)
+    datos_alumnos = db.exec(query).all()
+    return [Alumno.model_validate(alumno) for alumno in datos_alumnos]
 
 @app.get("/api/asistencia/asignaturas", response_model=list[Asignatura], tags=["VER ASIGNATURAS"])
 async def ver_asignaturas(db: Session = Depends(get_db)):
@@ -63,24 +75,24 @@ async def ver_asignaturas(db: Session = Depends(get_db)):
     datos_asignaturas=db.exec(query).all()
     return [Asignatura.model_validate(asignatura) for asignatura in datos_asignaturas]
 
+# DELETE
 @app.delete("/api/asistencia/persona", response_model=dict, tags=["ELIMINAR USUARIO"])
-async def eliminar_usuario(id: int, db: Session = Depends(get_db)):
-    query=select(Persona).where(Persona.id_persona == id)
+async def eliminar_usuario(id: str, db: Session = Depends(get_db)):
+    query=select(Alumno).where(Alumno.id_alumno == id)
     eliminar_usuario= db.exec(query).first()
     if eliminar_usuario:
-        if eliminar_usuario.rol == "alumno":
-            query_alumno=select(Alumno).where(Alumno.id_alumno == id)
-            eliminar_alumno=db.exec(query_alumno).first()
-            db.delete(eliminar_alumno)
-        elif eliminar_usuario.rol == "profesor":
+        db.delete(eliminar_usuario)
+        db.commit()
+    else:
+        query_trabajador=select(Trabajador).where(Trabajador.id_persona == id)
+        eliminar_trabajador=db.exec(query_trabajador).first()
+        if eliminar_trabajador.rol == "profesor":
             query_profesor=select(Profesor).where(Profesor.id_profesor == id)
             eliminar_profesor=db.exec(query_profesor).first()
             db.delete(eliminar_profesor)
-        elif eliminar_usuario.rol == "personal_servicio":
+        elif eliminar_trabajador.rol == "personal_servicio":
             query_personal=select(PersonalServicio).where(PersonalServicio.id_personal == id)
             eliminar_personal=db.exec(query_personal).first()
             db.delete(eliminar_personal)
         db.commit()
-    db.delete(eliminar_usuario)
-    db.commit()
     return {"msg":"Usuario eliminado"}

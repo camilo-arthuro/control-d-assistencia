@@ -1,8 +1,8 @@
 from sqlmodel import SQLModel, create_engine, Session, select
 from dotenv import load_dotenv
 from datetime import datetime, date, time
-from app.model.UserTic import Alumno, Persona
-from app.model.clase import Asignatura, Trabaja, Asiste
+from app.model.UserTic import Alumno, Trabajador
+from app.model.clase import Asignatura, Asiste, Horario_T
 import paho.mqtt.client as mqtt
 import os
 
@@ -57,13 +57,23 @@ def on_message(client, userdata, msg):
     hora_actual=time(hh,mm)
 
     with (Session(engine) as db):
-        query = select(Persona).where(Persona.id_persona == id_usuario)
-        ddbb_persona = db.exec(query).first()
-        if not ddbb_persona:
-            return print(f"Tarjeta sin asignar: {id_usuario}")
+        query = select(Alumno).where(Alumno.id_alumno == id_usuario)
+        ddbb_alumno = db.exec(query).first()
+        if not ddbb_alumno:
+            query_trabajador=select(Trabajador).where(Trabajador.id_persona == id_usuario)
+            ddbb_trabajador=db.exec(query_trabajador).first()
+            if not ddbb_trabajador:
+                return print(f"Tarjeta sin asignar: {id_usuario}")
+            else:
+                registro_trabajador=Horario_T(
+                    id_personal=id_usuario,
+                    fecha=fecha_actual,
+                    hora=hora_actual
+                )
+                db.add(registro_trabajador)
+                db.commit()
+                return print(f"Asistencia registrada {id_usuario}")
         else:
-            rol = ddbb_persona.rol
-        if rol == "alumno":
             registro_alumno=Asiste(
                 id_alumno = id_usuario,
                 id_asignatura= 1,
@@ -72,15 +82,6 @@ def on_message(client, userdata, msg):
                 asistio= True
             )
             db.add(registro_alumno)
-            db.commit()
-            return print(f"Asistencia registrada {id_usuario}")
-        else:
-            registro_personal=Trabaja(
-                id_personal=id_usuario,
-                fecha=fecha_actual,
-                hora=hora_actual
-            )
-            db.add(registro_personal)
             db.commit()
             return print(f"Asistencia registrada {id_usuario}")
 
