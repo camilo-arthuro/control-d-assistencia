@@ -8,13 +8,6 @@ import os
 
 load_dotenv()
 
-'''
-MQTT_HOST = os.getenv("MQTT_HOST")
-MQTT_PORT = int(os.getenv("MQTT_PORT"))
-MQTT_TOPIC = os.getenv("MQTT_TOPIC")
-MQTT_CLIENT_ID = os.getenv("MQTT_CLIENT_ID")
-'''
-
 # AWS IoT MQTT
 AWS_IOT_ENDPOINT = os.getenv("AWS_IOT_ENDPOINT")
 AWS_IOT_PORT = int(os.getenv("AWS_IOT_PORT", 8883))
@@ -44,12 +37,12 @@ def on_message(client, userdata, msg):
     print(f"Mensaje recibido en {msg.topic}: {msg.payload}")
 
     try:
-        payload = msg.payload.decode()
+        payload = str(msg.payload.decode())
         print("Payload decodificado: ", payload)
     except Exception as e:
         print("Formato inesperado, no se pudo convertir: ", e)
         payload = "Formato inesperado"
-    id_usuario = str(payload)
+    id_usuario = payload
     info_fecha = datetime.now()
     fecha_actual = info_fecha.date()
     hh = info_fecha.hour
@@ -60,7 +53,7 @@ def on_message(client, userdata, msg):
         query = select(Alumno).where(Alumno.id_alumno == id_usuario)
         ddbb_alumno = db.exec(query).first()
         if not ddbb_alumno:
-            query_trabajador=select(Trabajador).where(Trabajador.id_persona == id_usuario)
+            query_trabajador=select(Trabajador).where(Trabajador.id_trabajador == id_usuario)
             ddbb_trabajador=db.exec(query_trabajador).first()
             if not ddbb_trabajador:
                 return print(f"Tarjeta sin asignar: {id_usuario}")

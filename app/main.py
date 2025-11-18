@@ -34,10 +34,10 @@ async def crear_trabajador(trabajador_nuevo: Trabajador, db: Session = Depends(g
     db.add(datos_trabajador)
     db.commit()
     if datos_trabajador.rol == "profesor":
-        nuevo_profesor=Profesor.model_validate({"id_profesor" : datos_trabajador.id_persona})
+        nuevo_profesor=Profesor.model_validate({"id_profesor" : datos_trabajador.id_trabajador})
         db.add(nuevo_profesor)
     elif datos_trabajador.rol == "personal_servicio":
-        nuevo_personal=PersonalServicio.model_validate({"id_personal" : datos_trabajador.id_persona})
+        nuevo_personal=PersonalServicio.model_validate({"id_personal" : datos_trabajador.id_trabajador})
         db.add(nuevo_personal)
     db.commit()
     return {"msg":"Trabajdor creado y añadido a la DDBB"}
@@ -84,15 +84,17 @@ async def eliminar_usuario(id: str, db: Session = Depends(get_db)):
         db.delete(eliminar_usuario)
         db.commit()
     else:
-        query_trabajador=select(Trabajador).where(Trabajador.id_persona == id)
+        query_trabajador=select(Trabajador).where(Trabajador.id_trabajador == id)
         eliminar_trabajador=db.exec(query_trabajador).first()
         if eliminar_trabajador.rol == "profesor":
             query_profesor=select(Profesor).where(Profesor.id_profesor == id)
             eliminar_profesor=db.exec(query_profesor).first()
             db.delete(eliminar_profesor)
+            db.commit()
         elif eliminar_trabajador.rol == "personal_servicio":
             query_personal=select(PersonalServicio).where(PersonalServicio.id_personal == id)
             eliminar_personal=db.exec(query_personal).first()
             db.delete(eliminar_personal)
+            db.commit()
         db.commit()
     return {"msg":"Usuario eliminado"}
