@@ -59,7 +59,7 @@ def on_message(client, userdata, msg):
                 return print(f"Tarjeta sin asignar: {id_usuario}")
             else:
                 registro_trabajador=Horario_T(
-                    id_personal=id_usuario,
+                    id_trabajador=id_usuario,
                     fecha=fecha_actual,
                     hora=hora_actual
                 )
@@ -69,7 +69,7 @@ def on_message(client, userdata, msg):
         else:
             registro_alumno=Asiste(
                 id_alumno = id_usuario,
-                id_asignatura= 1,
+                id_asignatura= "P1",
                 fecha= fecha_actual,
                 hora= hora_actual,
                 asistio= True

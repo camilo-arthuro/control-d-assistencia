@@ -2,7 +2,8 @@ from sqlmodel import SQLModel, Field
 from datetime import date, time
 
 class Horario_T(SQLModel, table=True):
-    id_persona: str = Field(foreign_key="trabajador.id_persona", primary_key=True)
+    id_horario_t: int = Field(default=None, primary_key=True)
+    id_trabajador: str = Field(foreign_key="trabajador.id_trabajador")
     fecha: date = Field(primary_key=True)
     hora: time = Field(primary_key=True)
 
