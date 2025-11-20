@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlmodel import SQLModel, create_engine, Session, select
 from dotenv import load_dotenv
 from datetime import datetime, date, time
@@ -58,15 +59,18 @@ def on_message(client, userdata, msg):
             if not ddbb_trabajador:
                 return print(f"Tarjeta sin asignar: {id_usuario}")
             else:
-                registro_trabajador=RegistroHorario_T(
+                registro_trabajador=Horario_T(
                     id_trabajador=id_usuario,
                     fecha=fecha_actual,
                     hora=hora_actual
                 )
-                registro_horario_t = Horario_T.model_validate(registro_trabajador)
-                db.add(registro_horario_t)
-                db.commit()
-                return print(f"Asistencia registrada {id_usuario}")
+                try:
+                    db.add(registro_trabajador)
+                    db.commit()
+                    return print(f"Asistencia registrada {id_usuario}")
+                except IntegrityError:
+                    db.rollback()
+                    print(f"Registro duplicado: {registro_trabajador.id_horario_t} - {registro_trabajador.id_trabajador} ya existe un horario para este trabajador en ese instante.")
         else:
             registro_alumno=Asiste(
                 id_alumno = id_usuario,
@@ -75,9 +79,13 @@ def on_message(client, userdata, msg):
                 hora= hora_actual,
                 asistio= True
             )
-            db.add(registro_alumno)
-            db.commit()
-            return print(f"Asistencia registrada {id_usuario}")
+            try:
+                db.add(registro_alumno)
+                db.commit()
+                return print(f"Asistencia registrada {id_usuario}")
+            except IntegrityError:
+                db.rollback()
+                print("Registro duplicado: ya existe un registro para este alumno en ese instante")
 
 def start_mqtt():
     client = mqtt.Client(client_id=AWS_IOT_CLIENT_ID)
