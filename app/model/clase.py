@@ -7,6 +7,11 @@ class Horario_T(SQLModel, table=True):
     fecha: date = Field(primary_key=True)
     hora: time = Field(primary_key=True)
 
+class RegistroHorario_T(SQLModel):
+    id_trabajador: str
+    fecha: date
+    hora: time
+
 class Asiste(SQLModel, table=True):
     id_alumno: str = Field(foreign_key="alumno.id_alumno", primary_key=True)
     id_asignatura: str = Field(foreign_key="asignatura.id_asignatura", primary_key=True)
