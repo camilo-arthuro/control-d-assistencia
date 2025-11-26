@@ -38,7 +38,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(AWS_IOT_SUB_TOPIC)
 
 def publish_led(client, value: int):
-    message = json.dumps({"Led": str(value)})
+    message = json.dumps({"led": str(value)})
     client.publish(AWS_IOT_PUB_TOPIC, message)
     print(f"Publicado a {AWS_IOT_PUB_TOPIC}: {message}")
 

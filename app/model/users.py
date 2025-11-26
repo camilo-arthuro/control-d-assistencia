@@ -11,7 +11,7 @@ class Trabajador(SQLModel, table=True):
     apellidos: str = Field(max_length=100)
     correoelectronico: str = Field(max_length=100, unique=True)
     rol: RolEnum
-    id_trajeta: str
+    id_tarjeta: str
 
 class PersonalServicio(SQLModel, table=True):
     id_personal: int = Field(foreign_key="trabajador.id_trabajador", primary_key=True)
