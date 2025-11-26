@@ -2,8 +2,8 @@ from fastapi import FastAPI, Depends
 from sqlmodel import SQLModel, create_engine, Session, select
 from .mqtt.mqtt_service import start_mqtt
 from dotenv import load_dotenv
-from .model.UserTic import Trabajador, Alumno, Profesor, PersonalServicio
-from .model.clase import Asignatura
+from .model.users import Trabajador, Alumno, Profesor, PersonalServicio
+from .model.academics import Asignatura
 import threading
 import os
 

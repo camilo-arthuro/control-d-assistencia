@@ -4,13 +4,13 @@ import json
 
 MQTT_HOST = "broker.hivemq.com"
 MQTT_PORT = 1883
-MQTT_TOPIC = "test/control-assistencia"
+MQTT_TOPIC = "test/arduino_asistencia"
 
 client = mqtt.Client()
 
 client.connect(MQTT_HOST, MQTT_PORT)
 
-payload = "1"
+payload = "agjhkjg"
 client.publish(MQTT_TOPIC, payload)
 print(f"Mensaje enviado: {payload}")
 

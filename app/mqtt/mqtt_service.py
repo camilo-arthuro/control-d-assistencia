@@ -2,17 +2,20 @@ from sqlalchemy.exc import IntegrityError
 from sqlmodel import SQLModel, create_engine, Session, select
 from dotenv import load_dotenv
 from datetime import datetime, date, time
-from app.model.UserTic import Alumno, Trabajador
-from app.model.clase import RegistroHorario_T, Asiste, Horario_T
+from app.model.users import Alumno, Trabajador
+from app.model.academics import RegistroHorario_T, Asiste, Horario_T
 import paho.mqtt.client as mqtt
 import os
+import json
 
 load_dotenv()
 
 # AWS IoT MQTT
 AWS_IOT_ENDPOINT = os.getenv("AWS_IOT_ENDPOINT")
 AWS_IOT_PORT = int(os.getenv("AWS_IOT_PORT", 8883))
-AWS_IOT_TOPIC = os.getenv("AWS_IOT_TOPIC")
+#AWS_IOT_TOPIC = os.getenv("AWS_IOT_TOPIC")
+AWS_IOT_SUB_TOPIC = os.getenv("AWS_IOT_SUB_TOPIC", "rfid/tag")
+AWS_IOT_PUB_TOPIC = os.getenv("AWS_IOT_PUB_TOPIC", "rfid/led")
 AWS_IOT_CLIENT_ID = os.getenv("AWS_IOT_CLIENT_ID")
 AWS_IOT_CERT = os.getenv("AWS_IOT_CERT")
 AWS_IOT_KEY = os.getenv("AWS_IOT_KEY")
@@ -32,7 +35,12 @@ def get_db():
 
 def on_connect(client, userdata, flags, rc):
     print("Conectado a AWS IoT con codigo:", rc)
-    client.subscribe(AWS_IOT_TOPIC)
+    client.subscribe(AWS_IOT_SUB_TOPIC)
+
+def publish_led(client, value: int):
+    message = json.dumps({"Led": str(value)})
+    client.publish(AWS_IOT_PUB_TOPIC, message)
+    print(f"Publicado a {AWS_IOT_PUB_TOPIC}: {message}")
 
 def on_message(client, userdata, msg):
     print(f"Mensaje recibido en {msg.topic}: {msg.payload}")
@@ -43,7 +51,7 @@ def on_message(client, userdata, msg):
     except Exception as e:
         print("Formato inesperado, no se pudo convertir: ", e)
         payload = "Formato inesperado"
-    id_usuario = payload
+    id_tarjeta = payload
     info_fecha = datetime.now()
     fecha_actual = info_fecha.date()
     hh = info_fecha.hour
@@ -51,29 +59,33 @@ def on_message(client, userdata, msg):
     hora_actual=time(hh,mm)
 
     with (Session(engine) as db):
-        query = select(Alumno).where(Alumno.id_alumno == id_usuario)
+        query = select(Alumno).where(Alumno.id_tarjeta == id_tarjeta)
         ddbb_alumno = db.exec(query).first()
         if not ddbb_alumno:
-            query_trabajador=select(Trabajador).where(Trabajador.id_trabajador == id_usuario)
+            query_trabajador=select(Trabajador).where(Trabajador.id_tarjeta == id_tarjeta)
             ddbb_trabajador=db.exec(query_trabajador).first()
             if not ddbb_trabajador:
-                return print(f"Tarjeta sin asignar: {id_usuario}")
+                publish_led(client, 0)
+                return print(f"Tarjeta sin asignar: {id_tarjeta}")
             else:
-                registro_trabajador=Horario_T(
-                    id_trabajador=id_usuario,
+                registro_trabajador=RegistroHorario_T(
+                    id_trabajador=ddbb_trabajador.id_trabajador,
                     fecha=fecha_actual,
                     hora=hora_actual
                 )
                 try:
-                    db.add(registro_trabajador)
+                    guardar_registro=Horario_T.model_validate(registro_trabajador)
+                    db.add(guardar_registro)
                     db.commit()
-                    return print(f"Asistencia registrada {id_usuario}")
+                    publish_led(client, 1)
+                    return print(f"Asistencia registrada. ID: {guardar_registro.id_trabajador} - Tarjeta: {id_tarjeta}")
                 except IntegrityError:
                     db.rollback()
+                    publish_led(client, 0)
                     print(f"Registro duplicado: {registro_trabajador.id_horario_t} - {registro_trabajador.id_trabajador} ya existe un horario para este trabajador en ese instante.")
         else:
             registro_alumno=Asiste(
-                id_alumno = id_usuario,
+                id_alumno = ddbb_alumno.id_alumno,
                 id_asignatura= "P1",
                 fecha= fecha_actual,
                 hora= hora_actual,
@@ -82,9 +94,11 @@ def on_message(client, userdata, msg):
             try:
                 db.add(registro_alumno)
                 db.commit()
-                return print(f"Asistencia registrada {id_usuario}")
+                publish_led(client, 1)
+                return print(f"Asistencia registrada {id_tarjeta}")
             except IntegrityError:
                 db.rollback()
+                publish_led(client, 0)
                 print("Registro duplicado: ya existe un registro para este alumno en ese instante")
 
 def start_mqtt():
