@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from sqlmodel import SQLModel, create_engine, Session, select
 from .mqtt.mqtt_service import start_mqtt
 from dotenv import load_dotenv
-from .model.users import Trabajador, Alumno, Profesor, PersonalServicio
+from .model.users import Trabajador, NuevoTrabajador, Alumno, NuevoAlumno, Profesor, PersonalServicio
 from .model.academics import Asignatura
 import threading
 import os
@@ -29,7 +29,7 @@ def startup_event():
 
 # CREATE
 @app.post("/api/asistencia/trabajador", response_model=dict, tags=["CREAR TRABAJADOR"])
-async def crear_trabajador(trabajador_nuevo: Trabajador, db: Session = Depends(get_db)):
+async def crear_trabajador(trabajador_nuevo: NuevoTrabajador, db: Session = Depends(get_db)):
     datos_trabajador = Trabajador.model_validate(trabajador_nuevo)
     db.add(datos_trabajador)
     db.commit()
@@ -43,7 +43,7 @@ async def crear_trabajador(trabajador_nuevo: Trabajador, db: Session = Depends(g
     return {"msg":"Trabajdor creado y añadido a la DDBB"}
 
 @app.post("/api/asistencia/alumno", response_model=dict, tags=["CREAR ALUMNO"])
-async def crear_alumno(alumno_nuevo: Alumno, db:Session = Depends(get_db)):
+async def crear_alumno(alumno_nuevo: NuevoAlumno, db:Session = Depends(get_db)):
     datos_alumno = Alumno.model_validate(alumno_nuevo)
     db.add(datos_alumno)
     db.commit()
@@ -77,7 +77,7 @@ async def ver_asignaturas(db: Session = Depends(get_db)):
 
 # DELETE
 @app.delete("/api/asistencia/persona", response_model=dict, tags=["ELIMINAR USUARIO"])
-async def eliminar_usuario(id: str, db: Session = Depends(get_db)):
+async def eliminar_usuario(id: int, db: Session = Depends(get_db)):
     query=select(Alumno).where(Alumno.id_alumno == id)
     eliminar_usuario= db.exec(query).first()
     if eliminar_usuario:
