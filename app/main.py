@@ -75,7 +75,7 @@ async def ver_asignaturas(db: Session = Depends(get_db)):
     datos_asignaturas=db.exec(query).all()
     return [Asignatura.model_validate(asignatura) for asignatura in datos_asignaturas]
 
-# DELETE
+# DELETE ############################################################
 @app.delete("/api/asistencia/persona", response_model=dict, tags=["ELIMINAR USUARIO"])
 async def eliminar_usuario(id: int, db: Session = Depends(get_db)):
     query=select(Alumno).where(Alumno.id_alumno == id)
