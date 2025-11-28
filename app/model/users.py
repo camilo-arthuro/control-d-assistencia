@@ -10,6 +10,7 @@ class Trabajador(SQLModel, table=True):
     nombre: str = Field(max_length=100)
     apellidos: str = Field(max_length=100)
     correoelectronico: str = Field(max_length=100, unique=True)
+    contrasenya: str
     rol: RolEnum
     id_tarjeta: str
 
@@ -17,6 +18,7 @@ class NuevoTrabajador(SQLModel):
     nombre: str = Field(max_length=100)
     apellidos: str = Field(max_length=100)
     correoelectronico: str = Field(max_length=100, unique=True)
+    contrasenya: str
     rol: RolEnum
     id_tarjeta: str
 
@@ -31,10 +33,12 @@ class Alumno(SQLModel, table=True):
     nombre: str = Field(max_length=100)
     apellidos: str = Field(max_length=100)
     correoelectronico: str = Field(max_length=100, unique=True)
+    contrasenya: str
     id_tarjeta: str
 
 class NuevoAlumno(SQLModel):
     nombre: str = Field(max_length=100)
     apellidos: str = Field(max_length=100)
     correoelectronico: str = Field(max_length=100, unique=True)
+    contrasenya: str
     id_tarjeta: str
