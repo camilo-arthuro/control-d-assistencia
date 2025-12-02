@@ -1,5 +1,13 @@
+from enum import Enum
 from sqlmodel import SQLModel, Field
 from datetime import date, time
+
+class DiaSemana(str, Enum):
+    lunes = "lunes"
+    martes = "martes"
+    miercoles = "miercoles"
+    jueves = "jueves"
+    viernes = "viernes"
 
 class Horario_T(SQLModel, table=True):
     id_horario_t: int = Field (default=None, primary_key=True)
@@ -28,6 +36,6 @@ class Asignatura(SQLModel, table=True):
 class Horario_A(SQLModel, table = True):
     id_horario_a: int = Field(default=None, primary_key=True)
     id_asignatura: str = Field(foreign_key="asignatura.id_asignatura", primary_key=True)
-    fecha: date
+    dia: DiaSemana
     hora: time
     aula: str = Field(max_length=20)
