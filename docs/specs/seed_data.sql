@@ -34,16 +34,23 @@ VALUES
 (1, 'P1', 'lunes', '15:30', 'Aula 101'),
 (2, 'S2', 'lunes', '17:00', 'Aula 101'),
 (3, 'Pr3', 'lunes', '18:00', 'Aula 101'),
-(4, 'HIS201', 'martes', '11:00', 'Aula 202');
+(4, 'Pr3', 'martes', '17:00', 'Aula 101'),
+(5, 'T4', 'martes', '19:00', 'Aula 101'),
+(6, 'P1', 'miercoles', '17:00', 'Aula 101'),
+(7, 'S2', 'miercoles', '18:00', 'Aula 101'),
+(8, 'Pr3', 'jueves', '15:30', 'Aula 101'),
+(9, 'P1', 'jueves', '17:00', 'Aula 101'),
+(10, 'Pr3', 'viernes', '17:00', 'Aula 101'),
+(11, 'S2', 'viernes', '18:00', 'Aula 101');
 
 -- Horario de trabajadores (ejemplo de asistencia)
 INSERT INTO horario_t (id_horario_t, id_trabajador, fecha, hora)
 VALUES
-(1, 2, '2025-12-02', '08:00'),
-(2, 1, '2025-12-02', '09:00');
+(1, 2, '2025-12-02', '15:00'),
+(2, 1, '2025-12-02', '15:00');
 
 -- Asistencia de alumnos
 INSERT INTO asiste (id_alumno, id_asignatura, fecha, hora, asistio)
 VALUES
-(1, 'MAT101', '2025-12-02', '09:00', TRUE),
-(2, 'HIS201', '2025-12-02', '11:00', FALSE);
+(1, 'Pr3', '2025-12-02', '17:00', TRUE),
+(2, 'Pr3', '2025-12-02', '17:00', FALSE);
