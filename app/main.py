@@ -3,7 +3,7 @@ from sqlmodel import SQLModel, create_engine, Session, select
 from .mqtt.mqtt_service import start_mqtt
 from dotenv import load_dotenv
 from .model.users import Trabajador, NuevoTrabajador, Alumno, NuevoAlumno, Profesor, PersonalServicio
-from .model.academics import Asignatura
+from .model.academics import Asignatura, Asiste, Horario_T
 import threading
 import os
 
@@ -74,6 +74,18 @@ async def ver_asignaturas(db: Session = Depends(get_db)):
     query = select(Asignatura)
     datos_asignaturas = db.exec(query).all()
     return [Asignatura.model_validate(asignatura) for asignatura in datos_asignaturas]
+
+@app.get("/api/asistencia/asistencia", response_model = list[Asiste], tags = ["VER ASISTENCIA ALUMNOS"])
+async def ver_asistencia(db: Session = Depends(get_db)):
+    query = select(Asiste)
+    datos_asistencia = db.exec(query).all()
+    return [Asiste.model_validate(asistencia) for asistencia in datos_asistencia]
+
+@app.get("/api/asistencia/horario_t", response_model = list[Horario_T], tags = ["VER ASISTENCIA TRABAJADORES"])
+async def ver_asistencia(db: Session = Depends(get_db)):
+    query = select(Horario_T)
+    datos_horario = db.exec(query).all()
+    return [Horario_T.model_validate(horario) for horario in datos_horario]
 
 # UPDATE
 @app.put("/api/asistencia/alumno", response_model = dict, tags = ["EDITAR ALUMNO"])
